@@ -9,8 +9,6 @@ load_dotenv()
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 
-AUTH_URL = "https://myanimelist.net/v1/oauth2/authorize"
-TOKEN_URL = "https://myanimelist.net/v1/oauth2/token"
 
 pkce_store= {}
 

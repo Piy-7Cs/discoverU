@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from src.state import get_access_token
 from src.fetcher.mal import get_mal_list
 from src.llm import generate_prompt, call_llm
+
+
 load_dotenv()
 
 
