@@ -1,7 +1,6 @@
 import requests
 import os
 from dotenv import load_dotenv
-from src.pkce import generate_code_challenge, generate_code_verifier
 from urllib.parse import urlencode
 
 load_dotenv()
@@ -10,15 +9,8 @@ client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 
 
-pkce_store= {}
-
-
-def build_auth_url(redirect_uri: str, state: str, AUTH_URL:str):
-    code_verifier = generate_code_verifier()
-    code_challenge = generate_code_challenge(code_verifier)
-
-
-    pkce_store[state] = code_verifier
+def build_auth_url(redirect_uri: str, state: str, AUTH_URL:str, code_verifier):
+    code_challenge = code_verifier
 
     params = {
         "response_type":"code",
@@ -36,8 +28,9 @@ def build_auth_url(redirect_uri: str, state: str, AUTH_URL:str):
 
 from requests.auth import HTTPBasicAuth
 
-def exchange_code(code: str, redirect_uri: str, state: str, TOKEN_URL:str):
-    code_verifier = pkce_store.pop(state)
+def exchange_code(code: str, redirect_uri: str, state: str, TOKEN_URL:str, code_verifier):
+    
+    
 
     data = {
         "grant_type": "authorization_code",

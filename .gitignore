@@ -39,3 +39,5 @@ build/
 # FastAPI specific (if you store generated static or temp files)
 staticfiles/
 temp/
+
+node_modules/
