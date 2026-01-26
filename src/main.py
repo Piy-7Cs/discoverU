@@ -95,4 +95,7 @@ def analyse(request: Request):
     prompt = generate_prompt(mal_user_data)
     result = call_llm(prompt)
 
-    return {result: result}
+    if result is None:
+        return {"error": "LLM model is busy, Try again later"}
+
+    return {"result": result.text}

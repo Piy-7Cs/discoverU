@@ -1,6 +1,7 @@
 from google import genai
 from dotenv import load_dotenv
-
+from google.genai.errors import ServerError
+import time
 load_dotenv()
 
 
@@ -37,10 +38,18 @@ def generate_prompt(data):
 
 
 
-def call_llm(prompt: str):
-    response = gemini(prompt)
-    print(response.text)
-    return response.text
+def call_llm(prompt: str, retries = 3, delay =5):
+    for i in range(3):
+        try: 
+            response = gemini(prompt)
+            return response
+        except ServerError as e:
+            print("LLM server Busy, retrying")
+            time.sleep(delay)
+        
+    return None
+    
+   
 
 print("_client exists:", "_client" in globals())
 
