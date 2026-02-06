@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from src.oauth import build_auth_url, exchange_code, refresh_access_token
 from fastapi.responses import RedirectResponse
 import time, secrets, os
@@ -36,22 +36,33 @@ def login(request: Request):
     response =  RedirectResponse(auth_url)
     save_session(response, session_data)
 
-    return response
+    if not response: 
+        raise HTTPException(status_code=401, detail= "No Response")
+        
+
+    return {
+            "success": True,
+            "data" : response
+        }
 
 
 @app.get("/callback")
-def callback(request: Request):
+def callback(request: Request): 
+    try:
+        code = request.query_params.get("code")
+        state = request.query_params.get("state")
+        session_data = get_session(request)
+    
+        if state != session_data.get("state"):
+            raise HTTPException(status_code=401, detail= "Invalid state")
 
-    code = request.query_params.get("code")
-    state = request.query_params.get("state")
-    session_data = get_session(request)
- 
-    if state != session_data.get("state"):
-       return {"error": "invalid state"}
+        code_verifier = session_data.get("pkce_verifier")
+        tokens = exchange_code(code, redirect_uri, state, mal_token_url, code_verifier)
 
-    code_verifier = session_data.get("pkce_verifier")
-    tokens = exchange_code(code, redirect_uri, state, mal_token_url, code_verifier)
 
+    except Exception as e:
+        return {"success": False, "data": "OAuth failed"}
+    
     session_data.update({
         "access_token": tokens["access_token"],
         "refresh_token": tokens["refresh_token"],
@@ -59,9 +70,52 @@ def callback(request: Request):
     })
     response = RedirectResponse("/analyse")
     update_session(request, session_data)
-    #save_session(response, session_data)
-   
-    return response 
+    
+
+    if not response: 
+        raise HTTPException(status_code=404, detail= "No Response")
+    
+    return {
+            "success": True,
+            "data" : response
+        }
+
+
+
+@app.get("/analyse")
+def analyse(request: Request):
+
+    access_token = get_access_token(request)
+    if not access_token:
+        raise HTTPException(status_code=404, detail="Session Not found")
+
+    mal_user_data = get_mal_list(access_token)
+    if not mal_user_data :
+        raise HTTPException(status_code=404, detail="No Response")
+
+    prompt = generate_prompt(mal_user_data)
+    
+    result = call_llm(prompt)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="No Response from LLM ")
+
+    return {
+        "success" : True,
+        "data": result.text}
+
+
+
+
+
+
+
+
+
+
+
+#Functions
+
 
 
 def get_access_token(request: Request):
@@ -70,34 +124,20 @@ def get_access_token(request: Request):
         raise Exception("Not Authenticated")
     
     if time.time() >= session_data.get("expires_at", 0):
-        tokens = refresh_access_token(session_data.get("refresh_token"))
+        try:
+            tokens = refresh_access_token(session_data.get("refresh_token"))
+        except Exception as e:
+            return None
+        
         session_data.update({
             "access_token" : tokens["access_token"],
             "expires_at" : tokens["expires_at"]
         })
         
-
         if "refresh_token" in tokens:
             session_data["refresh_token"] = tokens["refresh_token"]
 
         update_session(request, session_data)
     session_data = get_session(request)
+
     return session_data.get("access_token")
-
-
-
-
-
-@app.get("/analyse")
-def analyse(request: Request):
-
-    access_token = get_access_token(request)
-    mal_user_data = get_mal_list(access_token)
-
-    prompt = generate_prompt(mal_user_data)
-    result = call_llm(prompt)
-
-    if result is None:
-        return {"error": "LLM model is busy, Try again later"}
-
-    return {"result": result.text}

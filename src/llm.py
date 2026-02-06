@@ -43,6 +43,7 @@ def call_llm(prompt: str, retries = 3, delay =5):
         try: 
             response = gemini(prompt)
             return response
+        
         except ServerError as e:
             print("LLM server Busy, retrying")
             time.sleep(delay)

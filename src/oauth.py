@@ -38,14 +38,21 @@ def exchange_code(code: str, redirect_uri: str, state: str, TOKEN_URL:str, code_
         "redirect_uri": redirect_uri,
         "code_verifier": code_verifier,
     }
+    try:
+        response = requests.post(
+            TOKEN_URL,
+            data=data,
+            auth=HTTPBasicAuth(client_id, client_secret),
+        )
 
-    response = requests.post(
-        TOKEN_URL,
-        data=data,
-        auth=HTTPBasicAuth(client_id, client_secret),
-    )
-
-    return response.json()
+        return response.json()
+    
+    except Exception as e:
+        return {
+            "success" : False,
+            "data" : f"Authorization Failed"
+        }
+    
 
 
 
@@ -56,8 +63,15 @@ def refresh_access_token(refresh_token, TOKEN_URL:str):
         "refresh_token":refresh_token
     }
 
-    response = requests.post(TOKEN_URL, data=data, auth=HTTPBasicAuth(client_id, client_secret))
-    return response.json()
+    try:
+        response = requests.post(TOKEN_URL, data=data, auth=HTTPBasicAuth(client_id, client_secret))
+        return response.json()
+    
+    except Exception as e:
+        return {
+            "success" : False,
+            "data" : f"Authorization Failed"
+        }
 
 
 
