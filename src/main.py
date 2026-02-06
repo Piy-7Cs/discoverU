@@ -7,6 +7,8 @@ from src.fetcher.mal import get_mal_list
 from src.llm import generate_prompt, call_llm
 from src.pkce import generate_code_challenge, generate_code_verifier
 from src.redis_session import save_session, get_session, update_session
+from fastapi.middleware.cors import CORSMiddleware
+
 
 
 load_dotenv()
