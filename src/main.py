@@ -40,10 +40,7 @@ def login(request: Request):
         raise HTTPException(status_code=401, detail= "No Response")
         
 
-    return {
-            "success": True,
-            "data" : response
-        }
+    return response
 
 
 @app.get("/callback")

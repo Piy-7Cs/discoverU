@@ -48,10 +48,7 @@ def exchange_code(code: str, redirect_uri: str, state: str, TOKEN_URL:str, code_
         return response.json()
     
     except Exception as e:
-        return {
-            "success" : False,
-            "data" : f"Authorization Failed"
-        }
+        return None
     
 
 
@@ -68,12 +65,7 @@ def refresh_access_token(refresh_token, TOKEN_URL:str):
         return response.json()
     
     except Exception as e:
-        return {
-            "success" : False,
-            "data" : f"Authorization Failed"
-        }
-
-
+        return None
 
 
 

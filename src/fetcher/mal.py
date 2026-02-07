@@ -10,8 +10,5 @@ def get_mal_list(access_token:str):
         response.raise_for_status()
         return response.json()
     except Exception as e:
-        return {
-            "success" : False,
-            "data" : f"No response from MAL ${e}"
-        }
+        return None
 
