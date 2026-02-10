@@ -1,6 +1,19 @@
+
+#Classes 
+
+class AppError(Exception):
+    def __init__(self, message: str):
+        self.message = message
+
+
+
+
+
+
+
 from fastapi import FastAPI, Request, HTTPException
 from src.oauth import build_auth_url, exchange_code, refresh_access_token
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 import time, secrets, os
 from dotenv import load_dotenv
 from src.fetcher.mal import get_mal_list
@@ -14,7 +27,6 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 app = FastAPI()
-
 
 
 
@@ -37,7 +49,7 @@ def login(request: Request):
     save_session(response, session_data)
 
     if not response: 
-        raise HTTPException(status_code=401, detail= "No Response")
+        raise AppError("No Response")
         
 
     return response
@@ -58,7 +70,7 @@ def callback(request: Request):
 
 
     except Exception as e:
-        return {"success": False, "data": "OAuth failed"}
+        raise AppError("Not Authenticated")
     
     session_data.update({
         "access_token": tokens["access_token"],
@@ -70,7 +82,7 @@ def callback(request: Request):
     
 
     if not response: 
-        raise HTTPException(status_code=404, detail= "No Response")
+        raise AppError("No Response")
     
     return {
             "success": True,
@@ -84,18 +96,17 @@ def analyse(request: Request):
 
     access_token = get_access_token(request)
     if not access_token:
-        raise HTTPException(status_code=404, detail="Session Not found")
+        raise AppError("Session Not Found")
 
     mal_user_data = get_mal_list(access_token)
     if not mal_user_data :
-        raise HTTPException(status_code=404, detail="No Response")
-
+        raise AppError("No Response")
     prompt = generate_prompt(mal_user_data)
     
     result = call_llm(prompt)
 
     if result is None:
-        raise HTTPException(status_code=404, detail="No Response from LLM ")
+        raise AppError("No Response From LLM")
 
     return {
         "success" : True,
@@ -103,6 +114,16 @@ def analyse(request: Request):
 
 
 
+
+@app.exception_handler(AppError)
+async def app_error_handler(request: Request, exc: AppError):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "success" : False,
+            "error" : exc.message
+        }
+    )
 
 
 
@@ -118,7 +139,7 @@ def analyse(request: Request):
 def get_access_token(request: Request):
     session_data = get_session(request)
     if not session_data.get("access_token"):
-        raise Exception("Not Authenticated")
+        raise AppError("Not Authenticated")
     
     if time.time() >= session_data.get("expires_at", 0):
         try:
@@ -138,3 +159,4 @@ def get_access_token(request: Request):
     session_data = get_session(request)
 
     return session_data.get("access_token")
+
