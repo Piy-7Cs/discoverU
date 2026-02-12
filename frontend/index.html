@@ -5,68 +5,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DiscoverU - Anime Analysis</title>
 <style>
-body { font-family: Arial, sans-serif; max-width: 700px; margin: 50px auto; }
-button { padding: 10px 20px; margin: 10px 5px 20px 0; cursor: pointer; }
-pre { background: #f4f4f4; padding: 15px; white-space: pre-wrap; word-wrap: break-word; }
-#loader { display: none; }
-#error { color: red; }
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 50px auto; }
+    button { padding: 10px 20px; margin: 10px 5px 20px 0; cursor: pointer; }
+    #loader { display: none; }
+    #error { color: red; }
+    #result { background: #f4f4f4; padding: 15px; }
 </style>
+<!-- Add marked.js CDN for Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+
 </head>
 <body>
 <h1>DiscoverU</h1>
 
 <button id="loginBtn">Login with MAL</button>
-<button id="analyseBtn" disabled>Get Analysis</button>
+<button id="analyseBtn">Get Analysis</button>
 
 <div id="loader">Loading...</div>
 <div id="error"></div>
-<pre id="result"></pre>
+<div id="result"></div>
 
 <script>
-const loginBtn = document.getElementById("loginBtn");
-const analyseBtn = document.getElementById("analyseBtn");
-const loader = document.getElementById("loader");
-const resultEl = document.getElementById("result");
-const errorEl = document.getElementById("error");
+    const loginBtn = document.getElementById("loginBtn");
+    const analyseBtn = document.getElementById("analyseBtn");
+    const loader = document.getElementById("loader");
+    const resultEl = document.getElementById("result");
+    const errorEl = document.getElementById("error");
 
-const BACKEND = "";
+    const BACKEND = "";
 
-// Enable analysis button if ?logged_in=true is in URL
-if (new URLSearchParams(window.location.search).get("logged_in") === "true") {
-    analyseBtn.disabled = false;
-}
+    loginBtn.addEventListener("click", () => {
+        window.location.href = `${BACKEND}/login`;
+    });
 
-// Login
-loginBtn.addEventListener("click", () => {
-    window.location.href = `${BACKEND}/login`;
-});
+    analyseBtn.addEventListener("click", async () => {
+        loader.style.display = "block";
+        errorEl.textContent = "";
+        resultEl.innerHTML = "";
 
-// Analyse
-analyseBtn.addEventListener("click", async () => {
-    loader.style.display = "block";
-    errorEl.textContent = "";
-    resultEl.textContent = "";
+        try {
+            const res = await fetch(`${BACKEND}/analyse`, {
+                method: "GET",
+                credentials: "include"
+            });
+            const data = await res.json();
 
-    try {
-        const res = await fetch(`${BACKEND}/analyse`, {
-            method: "GET",
-            credentials: "include" // sends cookies/session
-        });
-        const data = await res.json();
+            if (!data.success) {
+                errorEl.textContent = data.error || "Failed to get analysis";
+                return;
+            }
 
-        if (!data.success) {
-            errorEl.textContent = data.error || "Failed to get analysis";
-            return;
+            // Convert Markdown to HTML
+            resultEl.innerHTML = marked.parse(data.data);
+
+        } catch (err) {
+            console.error(err);
+            errorEl.textContent = "Failed to get analysis";
+        } finally {
+            loader.style.display = "none";
         }
-
-        resultEl.textContent = data.data;
-    } catch (err) {
-        console.error(err);
-        errorEl.textContent = "Failed to get analysis";
-    } finally {
-        loader.style.display = "none";
-    }
-});
+    });
 </script>
 </body>
 </html>
