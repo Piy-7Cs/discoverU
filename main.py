@@ -17,6 +17,9 @@ from src.llm import generate_prompt, call_llm
 from src.pkce import generate_code_challenge, generate_code_verifier
 from src.redis_session import save_session, get_session, update_session
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+
 
 
 
@@ -24,13 +27,10 @@ load_dotenv()
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins = ["http://localhost:5500", "https://nonjudicial-roderick-multiovulate.ngrok-free.dev"],
-    allow_credentials = True,
-    allow_methods = "*",
-    allow_headers = "*"
-)
+
+
+
+
 
 
 redirect_uri = os.getenv("REDIRECT_URI")
@@ -65,8 +65,8 @@ def callback(request: Request):
         state = request.query_params.get("state")
         session_data = get_session(request)
     
-        if state != session_data.get("state"):
-            raise HTTPException(status_code=401, detail= "Invalid state")
+        if not session_data or state != session_data.get("state"):
+            return RedirectResponse("/?logged_in=false")
 
         code_verifier = session_data.get("pkce_verifier")
         tokens = exchange_code(code, redirect_uri, state, mal_token_url, code_verifier)
@@ -80,16 +80,10 @@ def callback(request: Request):
         "refresh_token": tokens["refresh_token"],
         "expires_at": time.time() + tokens['expires_in']
     })
-    response = RedirectResponse("http://localhost:5500?logged_in=true")
 
     update_session(request, session_data)
     
-
-    if not response: 
-        raise AppError("No Response")
-    
-    return response
-
+    return RedirectResponse("/?logged_in=true")
 
 @app.get("/analyse")
 def analyse(request: Request):
@@ -128,7 +122,7 @@ async def app_error_handler(request: Request, exc: AppError):
 
 
 
-
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 
 

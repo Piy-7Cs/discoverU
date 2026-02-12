@@ -14,7 +14,9 @@ def save_session(response: Response, data: dict, session_id : str = None):
     if not session_id: 
         session_id = secrets.token_urlsafe(32)
     r.setex(session_id, SESSION_EXPIRE, pickle.dumps(data)) 
-    response.set_cookie("session_id", session_id,
+    
+    response.set_cookie( key="session_id", 
+                         value=session_id,
                          max_age=SESSION_EXPIRE,
                          httponly=True,
                          samesite=None, 
