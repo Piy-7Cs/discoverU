@@ -7,10 +7,6 @@ class AppError(Exception):
 
 
 
-
-
-
-
 from fastapi import FastAPI, Request, HTTPException
 from src.oauth import build_auth_url, exchange_code, refresh_access_token
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -28,12 +24,19 @@ load_dotenv()
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins = ["http://localhost:5500", "https://nonjudicial-roderick-multiovulate.ngrok-free.dev"],
+    allow_credentials = True,
+    allow_methods = "*",
+    allow_headers = "*"
+)
 
 
 redirect_uri = os.getenv("REDIRECT_URI")
 mal_auth_url = os.getenv("MAL_AUTH")
 mal_token_url = os.getenv("MAL_TOKEN")
-
+prompt_pre = os.getenv("PROMPT_PREFIX")
 
 @app.get("/login")
 def login(request: Request):
@@ -77,18 +80,15 @@ def callback(request: Request):
         "refresh_token": tokens["refresh_token"],
         "expires_at": time.time() + tokens['expires_in']
     })
-    response = RedirectResponse("/analyse")
+    response = RedirectResponse("http://localhost:5500?logged_in=true")
+
     update_session(request, session_data)
     
 
     if not response: 
         raise AppError("No Response")
     
-    return {
-            "success": True,
-            "data" : response
-        }
-
+    return response
 
 
 @app.get("/analyse")
@@ -101,7 +101,7 @@ def analyse(request: Request):
     mal_user_data = get_mal_list(access_token)
     if not mal_user_data :
         raise AppError("No Response")
-    prompt = generate_prompt(mal_user_data)
+    prompt = generate_prompt(prompt_pre, mal_user_data)
     
     result = call_llm(prompt)
 

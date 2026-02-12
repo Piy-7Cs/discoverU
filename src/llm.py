@@ -22,7 +22,7 @@ def get_client():
     return _client
 
 
-def generate_prompt(data):
+def generate_prompt(prompt_pre , data):
     arr = list(data.get("data"))
     def get_titles(entry):
         item = entry.get("node")
@@ -32,7 +32,7 @@ def generate_prompt(data):
     x = map(get_titles, arr)
     titles = ", ".join(str(element) for element in x)
 
-    prompt = f"You are a personality assessor, Based on Psychological studies from the web and based on your data, give insights into the personality of person who likes the following anime {titles}, reply as if you are talking to the person"
+    prompt = f"{prompt_pre} {titles}, reply as if you are talking to the person"
     return prompt
 
 

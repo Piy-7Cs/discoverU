@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiscoverU - Anime Analysis</title>
+<style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 50px auto; }
+    button { padding: 10px 20px; margin: 10px 5px 20px 0; cursor: pointer; }
+    pre { background: #f4f4f4; padding: 15px; white-space: pre-wrap; word-wrap: break-word; }
+    #loader { display: none; }
+    #error { color: red; }
+</style>
+</head>
+<body>
+<h1>DiscoverU</h1>
+
+<button id="loginBtn">Login with MAL</button>
+<button id="analyseBtn">Get Analysis</button>
+
+<div id="loader">Loading...</div>
+<div id="error"></div>
+<pre id="result"></pre>
+
+<script>
+    const loginBtn = document.getElementById("loginBtn");
+    const analyseBtn = document.getElementById("analyseBtn");
+    const loader = document.getElementById("loader");
+    const resultEl = document.getElementById("result");
+    const errorEl = document.getElementById("error");
+
+    const BACKEND = " https://nonjudicial-roderick-multiovulate.ngrok-free.dev"; 
+
+    loginBtn.addEventListener("click", () => {
+        window.location.href = `${BACKEND}/login`;
+    });
+
+    analyseBtn.addEventListener("click", async () => {
+        loader.style.display = "block";
+        errorEl.textContent = "";
+        resultEl.textContent = "";
+
+        try {
+            const res = await fetch(`${BACKEND}/analyse`, {
+                method: "GET",
+                credentials: "include" // sends cookies/session
+            });
+            const data = await res.json();
+
+            if (!data.success) {
+                errorEl.textContent = data.error || "Failed to get analysis";
+                return;
+            }
+
+            resultEl.textContent = data.data;
+
+        } catch (err) {
+            console.error(err);
+            errorEl.textContent = "Failed to get analysis";
+        } finally {
+            loader.style.display = "none";
+        }
+    });
+</script>
+</body>
+</html>
