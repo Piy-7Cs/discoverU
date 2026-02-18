@@ -45,7 +45,7 @@ prompt_pre = os.getenv("PROMPT_PREFIX")
 
 
 
-logging.basicConfig(level=logging.info, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 @app.get("/login")
 def login(request: Request):

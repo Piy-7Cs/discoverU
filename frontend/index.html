@@ -3,68 +3,252 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DiscoverU - Anime Analysis</title>
+<title>DiscoverU</title>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 <style>
-    body { font-family: Arial, sans-serif; max-width: 700px; margin: 50px auto; }
-    button { padding: 10px 20px; margin: 10px 5px 20px 0; cursor: pointer; }
-    #loader { display: none; }
-    #error { color: red; }
-    #result { background: #f4f4f4; padding: 15px; }
+:root {
+    --bg1: #0f172a;
+    --bg2: #1e293b;
+    --card: #111827;
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2));
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 820px;
+}
+
+.card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 35px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+}
+
+h1 {
+    margin: 0 0 10px 0;
+    font-size: 30px;
+}
+
+.subtitle {
+    color: var(--muted);
+    margin-bottom: 30px;
+}
+
+.buttons {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 25px;
+}
+
+button {
+    padding: 11px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.primary-btn {
+    background: var(--primary);
+    color: white;
+}
+
+.primary-btn:hover {
+    background: var(--primary-hover);
+}
+
+.success-btn {
+    background: var(--success);
+    color: white;
+    cursor: default;
+}
+
+.secondary-btn {
+    background: #374151;
+    color: white;
+}
+
+.secondary-btn:hover {
+    background: #4b5563;
+}
+
+.disabled-btn {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#loader {
+    display: none;
+    color: var(--muted);
+    margin-bottom: 15px;
+}
+
+#status {
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.error {
+    color: var(--danger);
+}
+
+.warning {
+    color: var(--warning);
+}
+
+.success {
+    color: var(--success);
+}
+
+#result {
+    background: #0f172a;
+    padding: 25px;
+    border-radius: 14px;
+    line-height: 1.65;
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+#result h1, #result h2, #result h3 {
+    margin-top: 25px;
+}
+
+#result code {
+    background: #1f2937;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
 </style>
-<!-- Add marked.js CDN for Markdown rendering -->
-<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
-
 </head>
+
 <body>
-<h1>DiscoverU</h1>
+<div class="container">
+    <div class="card">
+        <h1>DiscoverU</h1>
+        <div class="subtitle">
+            AI-powered analysis of your MyAnimeList profile.
+        </div>
 
-<button id="loginBtn">Login with MAL</button>
-<button id="analyseBtn">Get Analysis</button>
+        <div class="buttons">
+            <button id="loginBtn" class="primary-btn">
+                Login with MAL
+            </button>
 
-<div id="loader">Loading...</div>
-<div id="error"></div>
-<div id="result"></div>
+            <button id="analyseBtn" class="secondary-btn">
+                Generate Analysis
+            </button>
+        </div>
+
+        <div id="loader">Analyzing your anime soul...</div>
+        <div id="status"></div>
+        <div id="result"></div>
+    </div>
+</div>
 
 <script>
-    const loginBtn = document.getElementById("loginBtn");
-    const analyseBtn = document.getElementById("analyseBtn");
-    const loader = document.getElementById("loader");
-    const resultEl = document.getElementById("result");
-    const errorEl = document.getElementById("error");
+const loginBtn = document.getElementById("loginBtn");
+const analyseBtn = document.getElementById("analyseBtn");
+const loader = document.getElementById("loader");
+const resultEl = document.getElementById("result");
+const statusEl = document.getElementById("status");
 
-    const BACKEND = "";
+const BACKEND = window.location.origin;
 
-    loginBtn.addEventListener("click", () => {
-        window.location.href = `${BACKEND}/login`;
-    });
+// Handle login state
+const params = new URLSearchParams(window.location.search);
+if (params.get("logged_in") === "true") {
+    loginBtn.textContent = "Logged in ✓";
+    loginBtn.classList.remove("primary-btn");
+    loginBtn.classList.add("success-btn");
+}
 
-    analyseBtn.addEventListener("click", async () => {
-        loader.style.display = "block";
-        errorEl.textContent = "";
-        resultEl.innerHTML = "";
+loginBtn.addEventListener("click", () => {
+    if (loginBtn.classList.contains("success-btn")) return;
+    window.location.href = `${BACKEND}/login`;
+});
 
-        try {
-            const res = await fetch(`${BACKEND}/analyse`, {
-                method: "GET",
-                credentials: "include"
-            });
-            const data = await res.json();
+analyseBtn.addEventListener("click", async () => {
 
-            if (!data.success) {
-                errorEl.textContent = data.error || "Failed to get analysis";
-                return;
-            }
+    loader.style.display = "block";
+    statusEl.textContent = "";
+    resultEl.innerHTML = "";
 
-            // Convert Markdown to HTML
-            resultEl.innerHTML = marked.parse(data.data);
+    try {
+        const res = await fetch(`${BACKEND}/analyse`, {
+            method: "GET",
+            credentials: "include"
+        });
 
-        } catch (err) {
-            console.error(err);
-            errorEl.textContent = "Failed to get analysis";
-        } finally {
-            loader.style.display = "none";
+        const data = await res.json();
+
+        if (res.status === 429) {
+            handleRateLimit();
+            return;
         }
-    });
+
+        if (!data.success) {
+            statusEl.className = "error";
+            statusEl.textContent = data.error || "Something went wrong.";
+            return;
+        }
+
+        statusEl.className = "success";
+        statusEl.textContent = "Analysis generated successfully.";
+        resultEl.innerHTML = marked.parse(data.data);
+
+    } catch (err) {
+        statusEl.className = "error";
+        statusEl.textContent = "Server error.";
+    } finally {
+        loader.style.display = "none";
+    }
+});
+
+function handleRateLimit() {
+    statusEl.className = "warning";
+    statusEl.textContent = "Rate limit reached. Please wait before trying again.";
+
+    analyseBtn.classList.add("disabled-btn");
+    analyseBtn.disabled = true;
+
+    let seconds = 60;
+    const interval = setInterval(() => {
+        analyseBtn.textContent = `Try again in ${seconds}s`;
+        seconds--;
+
+        if (seconds < 0) {
+            clearInterval(interval);
+            analyseBtn.textContent = "Generate Analysis";
+            analyseBtn.disabled = false;
+            analyseBtn.classList.remove("disabled-btn");
+            statusEl.textContent = "";
+        }
+    }, 1000);
+}
 </script>
+
 </body>
 </html>
