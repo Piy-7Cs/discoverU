@@ -19,7 +19,12 @@ from src.redis_session import save_session, get_session, update_session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-
+#For Rate Limiting and Logging
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from fastapi import Request
+from slowapi.errors import RateLimitExceeded
+import logging
 
 
 
@@ -38,8 +43,15 @@ mal_auth_url = os.getenv("MAL_AUTH")
 mal_token_url = os.getenv("MAL_TOKEN")
 prompt_pre = os.getenv("PROMPT_PREFIX")
 
+
+
+logging.basicConfig(level=logging.info, format="%(asctime)s - %(levelname)s - %(message)s")
+
 @app.get("/login")
 def login(request: Request):
+
+    logging.info("Login Initiated from {request.client.host}")
+    
     state = secrets.token_urlsafe(16)
     code_verifier = generate_code_verifier()
 
@@ -75,6 +87,7 @@ def callback(request: Request):
     except Exception as e:
         raise AppError("Not Authenticated")
     
+    logging.info("Code successfully Exchanged {request.client.host}")
     session_data.update({
         "access_token": tokens["access_token"],
         "refresh_token": tokens["refresh_token"],
@@ -85,7 +98,23 @@ def callback(request: Request):
     
     return RedirectResponse("/?logged_in=true")
 
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc : RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"success" : False, 
+                 "error" : "Too many Requests"}
+    )
+
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+
+
 @app.get("/analyse")
+@limiter.limit("5/minute")
 def analyse(request: Request):
 
     access_token = get_access_token(request)
@@ -102,6 +131,7 @@ def analyse(request: Request):
     if result is None:
         raise AppError("No Response From LLM")
 
+    logging.info("Data Successfully Fetched for {request.client.host}")
     return {
         "success" : True,
         "data": result.text}
