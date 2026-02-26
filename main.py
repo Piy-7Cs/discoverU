@@ -60,7 +60,9 @@ def login(request: Request):
     session_data = {"state": state,
                     "pkce_verifier": code_verifier}
     
+
     response =  RedirectResponse(auth_url)
+    logging.info(f"AUTH URL: {auth_url}")
     save_session(response, session_data)
 
     if not response: 
