@@ -1,6 +1,6 @@
-import base64
+
 import secrets
-import hashlib
+
 
 
 def generate_code_verifier():
