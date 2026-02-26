@@ -2,7 +2,7 @@
 
 An AI-powered profile analyzer built with FastAPI, Redis, and OAuth 2.0 (PKCE).
 
-DiscoverU securely authenticates users via a third-party OAuth provider, fetches profile data, and generates an AI-driven analysis using an LLM — all wrapped in a clean frontend interface.
+DiscoverU securely authenticates users via MAL using Oauth2, fetches profile data, and generates an AI-driven analysis using an LLM — all wrapped in a clean frontend interface.
 
 ---
 
