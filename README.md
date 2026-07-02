@@ -33,7 +33,7 @@ DiscoverU securely authenticates users via MAL using Oauth2, fetches profile dat
   - Token exchange events
   - Analysis requests
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Backend:** FastAPI
 - **Session Store:** Redis
@@ -42,4 +42,21 @@ DiscoverU securely authenticates users via MAL using Oauth2, fetches profile dat
 - **AI Integration:** LLM API
 - **Frontend:** Vanilla HTML/CSS/JS
 - **Environment Management:** python-dotenv
+
+
+## Azure Practice Deployment details (Not online Due to credit limitations)
+
+Deployment architecture on Azure:
+
+* Azure App Service running the FastAPI backend
+* Azure Cache for Redis for session storage
+* Azure Key Vault for secrets management
+* Private Endpoint + VNet integration for secure Redis access
+* GitHub integration for Continuous deployment
+
+<img width="1280" height="645" alt="image" src="https://github.com/user-attachments/assets/4e4f6013-56e3-40e0-b531-ca17ff4f7e82" />
+
+<img width="1280" height="626" alt="image" src="https://github.com/user-attachments/assets/5a9a07f3-fd18-4c3f-ae1a-362b849ab4f3" />
+
+
 
