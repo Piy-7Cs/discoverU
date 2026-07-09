@@ -58,5 +58,6 @@ Deployment architecture on Azure:
 
 <img width="1280" height="626" alt="image" src="https://github.com/user-attachments/assets/5a9a07f3-fd18-4c3f-ae1a-362b849ab4f3" />
 
+<img width="1862" height="926" alt="image" src="https://github.com/user-attachments/assets/ab88c4e5-dc57-4420-8981-0b10b5d5df4f" />
 
 
